@@ -7,6 +7,8 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 
 import com.gestao.inventario_api.model.Produto;
 import com.gestao.inventario_api.repository.ProdutoRepository;
@@ -33,4 +35,10 @@ public class ProdutoController {
         // Salvamos o produto recebido e o Spring retorna o objeto com o ID preenchido
         return repository.save(produto);
     }
+    
+    @DeleteMapping("/{id}")
+    public void excluir(@PathVariable Long id) {
+        repository.deleteById(id);
+    }
+    
 }

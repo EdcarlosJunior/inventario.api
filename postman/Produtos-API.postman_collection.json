@@ -55,6 +55,26 @@
 				}
 			},
 			"response": []
+		},
+		{
+			"name": "http://localhost:8080/produtos/1",
+			"request": {
+				"method": "DELETE",
+				"header": [],
+				"url": {
+					"raw": "http://localhost:8080/produtos/1",
+					"protocol": "http",
+					"host": [
+						"localhost"
+					],
+					"port": "8080",
+					"path": [
+						"produtos",
+						"1"
+					]
+				}
+			},
+			"response": []
 		}
 	]
 }
