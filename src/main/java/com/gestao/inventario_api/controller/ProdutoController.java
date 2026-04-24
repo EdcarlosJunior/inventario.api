@@ -8,7 +8,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.http.ResponseEntity;
 
 import com.gestao.inventario_api.model.Produto;
 import com.gestao.inventario_api.repository.ProdutoRepository;
@@ -21,9 +23,18 @@ public class ProdutoController {
     private ProdutoRepository repository;
 
     // Retorna todos os produtos do banco
-    @GetMapping
-    public List<Produto> listar() {
-        return repository.findAll();
+    @GetMapping("/{id}")
+    // ResponseEntity<Produto> permite retornar o objeto junto com o código HTTP (200, 404, etc.)
+    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id){
+    	// findById retorna um "Optional". É como uma caixa que pode ou não ter um produto dentro.
+        return repository.findById(id)
+		        // Se o produto existir (caixa cheia), o .map entra em ação:
+		        // Ele pega o produto e retorna um "OK" (Status 200) com o produto no corpo da resposta.
+		        .map(produto -> ResponseEntity.ok(produto))
+		        
+		        // Se o produto NÃO existir (caixa vazia), o .orElse entra em ação:
+		        // Ele constrói uma resposta de "Não Encontrado" (Status 404).
+		        .orElse(ResponseEntity.notFound().build());
     }
 
     /**
@@ -31,14 +42,34 @@ public class ProdutoController {
      * O @RequestBody "converte" o JSON que o usuário envia para um objeto Produto.
      */
     @PostMapping
-    public Produto cadastrar(@RequestBody Produto produto) {
+    public ResponseEntity<Produto> salvar(@RequestBody Produto produto) {
         // Salvamos o produto recebido e o Spring retorna o objeto com o ID preenchido
-        return repository.save(produto);
+    	Produto novoProduto = repository.save(produto);
+    	return ResponseEntity.status(201).body(novoProduto);
     }
     
     @DeleteMapping("/{id}")
-    public void excluir(@PathVariable Long id) {
-        repository.deleteById(id);
+    public ResponseEntity<Void> excluir(@PathVariable Long id){
+    	return repository.findById(id).map(produto -> {
+    		repository.delete(produto);
+    		return ResponseEntity.noContent().<Void>build(); // Retorna 204 (Sucesso, sem conteúdo)
+    	}).orElse(ResponseEntity.notFound().build()); // Retorna 404 (Não encontrado)
+        
+    }
+    
+    @PutMapping("/{id}")
+    public Produto atualizar(@PathVariable Long id, @RequestBody Produto produtoAtualizado) {
+        return repository.findById(id)
+            .map(produto -> {
+                produto.setNome(produtoAtualizado.getNome());
+                produto.setPreco(produtoAtualizado.getPreco());
+                produto.setQuantidade(produtoAtualizado.getQuantidade());
+                return repository.save(produto);
+            })
+            .orElseGet(() -> {
+                produtoAtualizado.setId(id);
+                return repository.save(produtoAtualizado);
+            });
     }
     
 }
