@@ -1,19 +1,20 @@
 package com.gestao.inventario_api.controller;
 
-import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PutMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.http.ResponseEntity;
 
 import com.gestao.inventario_api.model.Produto;
 import com.gestao.inventario_api.repository.ProdutoRepository;
+
+import jakarta.validation.Valid;
 
 @RestController
 @RequestMapping("/produtos")
@@ -42,10 +43,9 @@ public class ProdutoController {
      * O @RequestBody "converte" o JSON que o usuário envia para um objeto Produto.
      */
     @PostMapping
-    public ResponseEntity<Produto> salvar(@RequestBody Produto produto) {
-        // Salvamos o produto recebido e o Spring retorna o objeto com o ID preenchido
-    	Produto novoProduto = repository.save(produto);
-    	return ResponseEntity.status(201).body(novoProduto);
+    public ResponseEntity<Produto> salvar(@Valid @RequestBody Produto produto) {
+        Produto novoProduto = repository.save(produto);
+        return ResponseEntity.status(201).body(novoProduto);
     }
     
     @DeleteMapping("/{id}")
@@ -58,18 +58,19 @@ public class ProdutoController {
     }
     
     @PutMapping("/{id}")
-    public Produto atualizar(@PathVariable Long id, @RequestBody Produto produtoAtualizado) {
+    public ResponseEntity<Produto> atualizar(@PathVariable Long id, @Valid @RequestBody Produto produtoAtualizado) {
         return repository.findById(id)
             .map(produto -> {
                 produto.setNome(produtoAtualizado.getNome());
                 produto.setPreco(produtoAtualizado.getPreco());
                 produto.setQuantidade(produtoAtualizado.getQuantidade());
-                return repository.save(produto);
+                Produto salvo = repository.save(produto);
+                return ResponseEntity.ok(salvo); // Retorna 200 OK com o produto
             })
             .orElseGet(() -> {
                 produtoAtualizado.setId(id);
-                return repository.save(produtoAtualizado);
-            });
+                Produto salvo = repository.save(produtoAtualizado);
+                return ResponseEntity.ok(salvo); // Também retorna ResponseEntity aqui
+            }); // O ponto e vírgula final vai aqui
     }
-    
 }

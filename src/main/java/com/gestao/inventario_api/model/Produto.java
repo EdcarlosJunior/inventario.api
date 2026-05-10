@@ -6,6 +6,9 @@ import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.PositiveOrZero;
+import jakarta.validation.constraints.NotNull;
 
 /**
  * A anotação @Entity define que esta classe é uma entidade do banco de dados.
@@ -25,14 +28,19 @@ public class Produto {
      */
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
-
+    
+    @NotBlank(message = "O nome do produto não pode estar vazio")
     private String nome;
     
-    private double preco;
-    
-    private int quantidade;
+    @NotNull(message = "O preço é obrigatório")
+    @PositiveOrZero(message = "O preço deve ser maior ou igual a zero")
+    private Double preco;
 
+    @NotNull(message = "A quantidade é obrigatória")
+    @PositiveOrZero(message = "A quantidade não pode ser negativa")
+    private Integer quantidade;
+    
+    private Long id;
     /**
      * Construtor Vazio:
      * É OBRIGATÓRIO para o JPA/Hibernate. Ele usa esse construtor 
