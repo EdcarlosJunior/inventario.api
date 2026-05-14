@@ -1,6 +1,9 @@
 package com.gestao.inventario_api.controller;
 
+import java.util.List;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -11,6 +14,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.gestao.inventario_api.dto.ProdutoRequestDTO;
+import com.gestao.inventario_api.dto.ProdutoResponseDTO;
 import com.gestao.inventario_api.model.Produto;
 import com.gestao.inventario_api.repository.ProdutoRepository;
 
@@ -23,19 +28,18 @@ public class ProdutoController {
     @Autowired
     private ProdutoRepository repository;
 
-    // Retorna todos os produtos do banco
-    @GetMapping("/{id}")
-    // ResponseEntity<Produto> permite retornar o objeto junto com o código HTTP (200, 404, etc.)
-    public ResponseEntity<Produto> buscarPorId(@PathVariable Long id){
-    	// findById retorna um "Optional". É como uma caixa que pode ou não ter um produto dentro.
-        return repository.findById(id)
-		        // Se o produto existir (caixa cheia), o .map entra em ação:
-		        // Ele pega o produto e retorna um "OK" (Status 200) com o produto no corpo da resposta.
-		        .map(produto -> ResponseEntity.ok(produto))
-		        
-		        // Se o produto NÃO existir (caixa vazia), o .orElse entra em ação:
-		        // Ele constrói uma resposta de "Não Encontrado" (Status 404).
-		        .orElse(ResponseEntity.notFound().build());
+    // Retorna produtos do banco
+    @GetMapping
+    public ResponseEntity<List<ProdutoResponseDTO>> listarTodos() {
+        // Buscamos todos os produtos do banco
+        var produtos = repository.findAll();
+        
+        // Convertemos a lista de Entidades para uma lista de DTOs
+        var listaDTO = produtos.stream()
+                               .map(ProdutoResponseDTO::new)
+                               .toList();
+                               
+        return ResponseEntity.ok(listaDTO);
     }
 
     /**
@@ -43,9 +47,18 @@ public class ProdutoController {
      * O @RequestBody "converte" o JSON que o usuário envia para um objeto Produto.
      */
     @PostMapping
-    public ResponseEntity<Produto> salvar(@Valid @RequestBody Produto produto) {
-        Produto novoProduto = repository.save(produto);
-        return ResponseEntity.status(201).body(novoProduto);
+    public ResponseEntity<ProdutoResponseDTO> criar(@RequestBody @Valid ProdutoRequestDTO dados) {
+        // 1. Converte o DTO que chegou na Entidade para o banco
+        var produto = new Produto();
+        produto.setNome(dados.nome());
+        produto.setPreco(dados.preco());
+        produto.setQuantidade(dados.quantidade());
+        
+        // 2. Salva no banco
+        repository.save(produto);
+        
+        // 3. Retorna o DTO de resposta (Status 201 Created)
+        return ResponseEntity.status(HttpStatus.CREATED).body(new ProdutoResponseDTO(produto));
     }
     
     @DeleteMapping("/{id}")
